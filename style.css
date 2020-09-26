@@ -1,0 +1,327 @@
+@charset "utf-8";
+
+body{
+	background:url(image/bgc.jpg);
+	text-align:center;
+}
+
+a:hover{
+	text-decoration: none;
+	color: #333333;
+	font-family: 宋体, Helvetica, Arial, Verdana, sans-serif;
+}
+
+.ww1{
+	position: relative;
+	background: #ffffff;
+	height: 200px;
+	top: 370px;
+}
+
+.ww{
+	position: relative;
+	background: #ffffff;
+	height: 200px;
+	top: 500px;
+}
+.www{
+	position: relative;
+	background: #ffffff;
+	height: 80px;
+	vertical-align: bottom;
+}
+.w {
+	width: 1100px;
+	background: #ffffff;
+	margin:0 auto;
+}
+
+.header {
+	margin: 0 auto;
+	height: 79px;
+	min-height: 79px;
+	width: 1000px;
+	position: relative;
+	top: 2%;
+}
+
+.wf {
+	margin: 10px 20% 3px 20%;
+	padding: 10px 0;
+	text-align: center;
+	vertical-align: bottom;
+	position: relative;
+}
+
+.wf1 {
+	position: absolute;
+	/* text-align: center;
+	vertical-align: bottom; */
+	top: 90%;
+	left: 42%;
+}
+
+.wf2 {
+	margin: 0 auto;
+	height: 39.3px;
+	width: 960px;
+	padding: 0 20px;
+	border-top: 1px solid #BABABA;
+	border-bottom: 1px solid #bababa;
+	position: relative;
+	top: 25%;
+}
+
+ul {
+	list-style-type: none;
+	line-height: 0;
+	word-spacing: normal;
+	color: rgb(141, 144, 149);
+	font-family: 宋体, Helvetica, Arial, Verdana, sans-serif;
+	font-style: normal;
+	font-weight: normal;
+	text-align: center;
+	padding: 0 8px 0 0;
+	width: auto;
+}
+
+li {
+	display: inline-block;
+	position: relative;
+	z-index: auto;
+	vertical-align: middle;
+	margin-left: 35px;
+	margin-right: 35px;
+}
+
+a {
+	text-decoration: none;
+	color: rgb(141, 144, 149);
+	font-family: 宋体, Helvetica, Arial, Verdana, sans-serif;
+}
+
+.wf3 {
+	position: relative;
+	text-align: center;
+	top: 40px;
+}
+
+.container {
+	max-width: 976px;
+	margin: 0 auto;
+	position: relative;
+	z-index: 3;
+	top: 57px;
+}
+
+.wf4 {
+	position: relative;
+	min-height: 1px;
+	padding-left: 5px;
+	padding-right: 5px;
+	float: left;
+	max-width: 100%;
+}
+
+.wf5 {
+	position: relative;
+	float: left;
+	padding-left: 5px;
+	padding-right: 5px;
+}
+
+.wf6 {
+	position: relative;
+	float: left;
+	padding-left: 14%;
+	padding-right: 14%;
+}
+
+.clearboth {
+	clear: both;
+}
+
+.wf7 {
+	margin: 0 auto;
+	max-width: 976px;
+	position: relative;
+	top: 87px;
+}
+
+.wf8 {
+	margin: 0 auto;
+	width: 976px;
+	position: relative;
+	top: 207px;
+}
+
+.wf9 {
+	position: relative;
+	float: left;
+	padding-left: 45%;
+}
+
+.wf10 {
+	margin: 0 auto;
+	width: 976px;
+	position: relative;
+	top: 237px;
+	height: 100px;
+}
+
+.wf11 {
+	width: 174px;
+	position: relative;
+}
+
+.bootstrap-frm {
+	margin-left: auto;
+	margin-right: auto;
+	max-width: 500px;
+	background: #FFF;
+	padding: 20px 30px 20px 30px;
+	font: 12px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #888;
+	text-shadow: 1px 1px 1px #FFF;
+	border: 1px solid #DDD;
+	border-radius: 5px;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+}
+
+.bootstrap-frm h1 {
+	font: 25px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	padding: 0px 0px 10px 40px;
+	display: block;
+	border-bottom: 1px solid #DADADA;
+	margin: -10px -30px 30px -30px;
+	color: #888;
+}
+
+.bootstrap-frm h1>span {
+	display: block;
+	font-size: 11px;
+}
+
+.bootstrap-frm label {
+	display: block;
+	margin: 0px 0px 5px;
+}
+
+.bootstrap-frm label>span {
+	float: left;
+	width: 20%;
+	text-align: right;
+	padding-right: 10px;
+	margin-top: 10px;
+	color: #333;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-weight: bold;
+}
+
+.bootstrap-frm input[type="text"],
+.bootstrap-frm input[type="email"],
+.bootstrap-frm textarea,
+.bootstrap-frm select {
+	border: 1px solid #CCC;
+	color: #888;
+	height: 20px;
+	line-height: 15px;
+	margin-bottom: 16px;
+	margin-right: 6px;
+	margin-top: 2px;
+	outline: 0 none;
+	padding: 5px 0px 5px 5px;
+	width: 70%;
+	border-radius: 4px;
+	-webkit-border-radius: 4px;
+	-moz-border-radius: 4px;
+	-webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+	box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+	-moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+}
+
+.bootstrap-frm select {
+	background: #FFF url('down-arrow.png') no-repeat right;
+	background: #FFF url('down-arrow.png') no-repeat right;
+	appearance: none;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	text-indent: 0.01px;
+	text-overflow: '';
+	width: 70%;
+	height: 35px;
+	line-height: 15px;
+}
+
+.bootstrap-frm textarea {
+	height: 100px;
+	padding: 5px 0px 0px 5px;
+	width: 70%;
+}
+
+.bootstrap-frm .button {
+	background: #FFF;
+	border: 1px solid #CCC;
+	padding: 10px 25px 10px 25px;
+	color: #333;
+	border-radius: 4px;
+}
+
+.bootstrap-frm .button:hover {
+	color: #333;
+	background-color: #EBEBEB;
+	border-color: #ADADAD;
+}
+
+.s1{
+	max-width: 976px;
+	margin: 0 auto;
+	position: relative;
+	z-index: 3;
+	top: 180px;
+}
+
+.pos{
+	position: relative;
+	text-align: left;
+	top: 40px;
+	left: 180px;
+}
+
+.pos1{
+	position: absolute;
+	width: 300px;
+	line-height: 2;
+	top:50px;
+	text-align: left;
+	right: 152px;
+}
+
+.pos2{
+	position: relative;
+	top:220px;
+	text-align: left;
+	left: 190px;
+}
+
+.pos3{
+	position: relative;
+	top:160px;
+}
+
+.content{
+	position: relative;
+	text-align: left;
+	top: 40px;
+	left: 80px;
+}
+
+.content1{
+	width: 970px;
+	height: 990px;
+	border-right: 1.2px dashed #d3d3d3;
+	border-top: 1.2px dashed #d3d3d3;
+	border-left: 1.2px dashed #d3d3d3;
+	border-bottom: 1.2px dashed #d3d3d3;
+}
