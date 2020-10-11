@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <title>Chap2 Demo Sierpinski Gasket </title>
+    <script id="vertex-shader2D" type="x-shader/x-vertex2D">
+	attribute vec4 vPosition;
+	void main(){
+		gl_Position = vPosition;
+	}
+	</script>
+
+    <script id="fragment-shader2D" type="x-shader/x-fragment2D">
+	precision mediump float;
+	void main(){
+		gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );
+	}
+    </script>
+    
+    <script id="vertex-shader3D" type="x-shader/x-vertex3D">
+        attribute vec3 vPosition;
+        attribute vec3 vColor;
+        varying vec4 color;
+    
+        void main(){
+            gl_Position = vec4( vPosition, 1.0 );
+            color = vec4( vColor, 1.0 );
+        }
+    </script>
+    
+    <script id="fragment-shader3D" type="x-shader/x-fragment3D">
+        precision mediump float;
+        varying vec4 color;
+        void main(){
+            gl_FragColor = color;
+        }
+    </script>
+
+    <script type="text/javascript" src="../common/webgl-utils.js"></script>
+    <script type="text/javascript" src="../common/initShaders.js"></script>
+    <script type="text/javascript" src="../common/gl-matrix-min.js"></script>
+
+    <script type="text/javascript" src="../js/gasket-triangles.js"></script>
+</head>
+
+<body>
+    <h2>Sierpinski Gasket</h2>
+    <canvas id="gl-canvas" width="512" height="512">你的浏览器不支持HTML5 canvas元素</canvas>
+    <br/><br/><br/>
+    <h3>单击下面的确定按钮，出现三角形</h3>
+    选择三角形形状：<input type="radio" name="shape" value="2D" checked="checked"/>2D&nbsp;&nbsp;
+    <input type="radio" name="shape" value="3D"/>3D&nbsp;&nbsp;
+    <input type="radio" name="shape" value="xk"/>线框&nbsp;&nbsp;
+    <button type="button" onclick="btn();init()">确定</button>
+    <br/><br/>
+    选择输入层数(1-7)：<input type="range", id="slide" min="1" max="7" step="1" onchange="changeCase();init()"/>
+    <span id="demo">层数:</span>
+    <br/><br/>
+    如果是<b>线框</b>:<input type="radio" name="rotate" value="plane"/>二维旋转&nbsp;&nbsp;
+    <input type="radio" name="rotate" value="dis"/>距离旋转&nbsp;&nbsp;
+    <button type="button" onclick="btn1();init()">确定</button>
+    <br/><br/>
+    如果是<b>线框</b>，选择旋转角度(0-360)：<input type="range", id="switch" min="0" max="360" step="1" onchange="changeangle();init()"/>
+    <span id="demo1">角度:</span>
+</body>
+</html>
