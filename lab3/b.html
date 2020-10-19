@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <title></title>
+    <script id="rot-v-shader" type="x-shader/x-vertex">
+	attribute vec4 vPosition;
+	uniform float theta;
+
+	void main()
+	{
+		float u = cos( theta );
+		float v = sin( theta );
+
+		gl_Position.x = vPosition.x * u - vPosition.y * v;
+		gl_Position.y = vPosition.x * v + vPosition.y * u;
+		gl_Position.z = 0.0;
+		gl_Position.w = 1.0;
+	}
+	</script>
+
+    <script id="rot-f-shader" type="x-shader/x-fragment">
+	precision mediump float;
+	void main()
+	{
+		gl_FragColor = vec4( 0.137, 0.675, 0.22, 1.0 );
+	}
+	</script>
+
+    <script type="text/javascript" src="../common/webgl-utils.js"></script>
+    <script type="text/javascript" src="../common/initShaders.js"></script>
+    <script type="text/javascript" src="../common/gl-matrix-min.js"></script>
+
+    <script type="text/javascript" src="../js/rotsquareslider1.js"></script>
+</head>
+
+<body onload="initRotSquare()">
+    <canvas id="rot-canvas" width="512" height="512">你的浏览器不支持HTML5 canvas元素</canvas>
+	<legend>旋转控制</legend><br/>
+	<button id="direction" onclick="changeState()">旋转</button>
+	<button id="direction" onclick="changeDir()">换个旋转方向</button>
+	Speed 0<input type="range" id="speedcon" min="0" max="100" value="50" step="10"> 100
+	<h3>原图是考拉和竹子，但是太复杂，所以先复刻竹子，以后学习更多内容后再补上考拉</h3>
+</body>
+
+</html>
