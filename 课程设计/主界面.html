@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>主界面</title>
+		<!-- <link rel="stylesheet" href="css/style.css"> -->
+		<style type="text/css">
+			body {
+				list-style-type: none;
+				background: linear-gradient(120deg,#baedff 0%,#07a2da 100%);
+			}
+
+			img {
+				width: 60px;
+				height: 60px;
+			}
+
+			.style1 {
+				font-size: 22px;
+				color: white;
+				font-weight: bold;
+				font-family: 宋体;
+				line-height: 2;
+			}
+
+			.style2 {
+				font-size: 15px;
+				color: darkgray;
+				font-weight: bold;
+				font-family: 宋体;
+				line-height: 3;
+			}
+
+			body {
+				overflow-x: hidden;
+			}
+
+			h1,
+			h2 {
+				transform: translate(14%, 60%);
+			}
+
+			/* 按钮类型 */
+			.buttonType {
+				width: 100px;
+				text-align: center;
+				line-height: 100%;
+				padding: 0.3em;
+				font: 16px Arial, sans-serif bold;
+				font-style: normal;
+				text-decoration: none;
+				margin: 2px;
+				vertical-align: text-bottom;
+				zoom: 1;
+				outline: none;
+				font-size-adjust: none;
+				font-stretch: normal;
+				border-radius: 50px;
+				box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.2);
+				text-shadow: 0px 1px 1px rgba(0, 0, 0, 0.3);
+				color: #fefee9;
+				border: 0.2px solid rgb(132, 151, 176);
+				background-repeat: repeat;
+				background-size: auto;
+				background-origin: padding-box;
+				background-clip: padding-box;
+				background-color: rgb(233, 172, 248);
+				background: linear-gradient(to bottom, #eeeff9 0%, rgb(157, 195, 230) 100%);
+			}
+
+			.buttonType:active {
+				background: rgb(14, 175, 180);
+			}
+
+			button {
+				width: 100px;
+				height: 30px;
+				cursor: pointer;
+			}
+
+			.clearBoth {
+				clear: both;
+			}
+
+			/* 标题栏 */
+			#headerDiv1 {
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 35%;
+				background-color: rgb(76, 187, 150);
+			}
+
+			#headerDiv1 h1 {
+				transform: translate(18%, 20%);
+			}
+
+			#headerDiv1 h2 {
+				transform: translate(18%, 20%);
+			}
+
+			/* 左侧栏 */
+			#leftColumn {
+				position: absolute;
+				top: 35%;
+				left: 12%;
+				width: 24%;
+				text-align: center;
+				
+			}
+
+			#leftColumn:hover {
+				background: transparent;
+				box-sizing: border-box;
+				border: rgb(65,133,156) 1px solid;
+				box-shadow: 0px 15px 15px rgba(0, 0, 0, .5);
+				border-radius: 15px;
+			}
+
+			/* 中间栏 */
+			#middleColumn {
+				position: absolute;
+				top: 35%;
+				left: 37%;
+				width: 24%;
+				text-align: center;
+				
+			}
+
+			#middleColumn:hover {
+				background: transparent;
+				box-sizing: border-box;
+				border: rgb(65,133,156) 1px solid;
+				box-shadow: 0px 15px 15px rgba(0, 0, 0, .5);
+				border-radius: 15px;
+			}
+
+			/* 右侧栏 */
+			#rightColumn {
+				position: absolute;
+				top: 35%;
+				right: 15%;
+				width: 24%;
+				text-align: center;
+				
+			}
+
+			#rightColumn:hover {
+				background: transparent;
+				box-sizing: border-box;
+				border: rgb(65,133,156) 1px solid;
+				box-shadow: 0px 15px 15px rgba(0, 0, 0, .5);
+				border-radius: 15px;
+			}
+			.w{
+				font-size: 40px;
+				letter-spacing: 3px;
+				color: white;
+				font-weight: bold;
+				font-family: 宋体;
+				line-height: 2;
+				position: relative;
+				top:40px;
+				left:39%;
+			}
+		</style>
+	</head>
+	<body>
+		<link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet">
+		<link rel='stylesheet prefetch' href='https://fonts.googleapis.com/icon?family=Material+Icons'>
+		<div class="cotn_principal">
+			<div class="w">3D相册管理中心</div>
+			<div id="leftColumn">
+				<img src="img/3.png" alt="me"><br />
+				<span class="style1">生成专属相册</span><br /><br /><br /><br /><br /><br /><br /><br />
+
+				<a href="3D相册.html">
+					<button type="submit" class="buttonType" οnclick="alert('ceshi-custom')">
+						进入</button>
+				</a>
+			</div>
+			<div class="clearBoth"></div>
+			<div id="middleColumn">
+				<img src="img/1.png" alt="music"><br />
+				<span class="style1">个人中心</span><br /><br /><br /><br /><br /><br /><br /><br />
+
+				<a href="">
+					<button type="submit" class="buttonType" οnclick="alert('ceshi-custom')">
+						进入</button>
+				</a>
+			</div>
+			<div class="clearBoth"></div>
+			<div id="rightColumn">
+				<img src="img/2.png" alt="travel"><br />
+				<span class="style1">社区中心</span><br /><br /><br /><br /><br /><br /><br /><br />
+
+				<a href="">
+					<button type="submit" class="buttonType" οnclick="alert('ceshi-custom')">
+						进入</button>
+				</a>
+			</div>
+		</div>
+	</body>
+</html>

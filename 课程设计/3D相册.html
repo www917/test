@@ -1,0 +1,378 @@
+<!DOCTYPE html><html><head>
+<style>
+#selector {
+    position: absolute;
+    bottom: 60px;
+    left: 0;
+    right: 0;
+    text-align: center;
+}
+#selector img {
+    width: 64px;
+    height: 64px;
+    border: 4px solid white;
+    box-shadow: 0 3px 5px rgba(0, 0, 0, .4);
+    margin: 4px;
+    cursor: pointer;
+}
+#loading {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: aliceblue;
+    text-align: center;
+    line-height: 0;
+    padding-top: 25%;
+    z-index: 2000;
+}
+#container {
+    height: 100vh;
+}
+body {
+    margin: 0;
+	background-color: aliceblue;
+}
+</style>
+</head>
+<body>
+<script type="text/javascript" src="libs/threejs/three.84.min.js"></script>
+<div id="container">
+    <div id="selector"></div>
+    <div id="loading" >Loading</div>
+</div>
+<script src="libs/modernizr.js"></script>
+<script src="libs/prefixfree.min.js"></script>
+<script src="uploads/1907/OrbitControls.js"></script>
+<script type="x-shader/x-vertex" id="particle-vs" >
+	precision highp float;
+
+	attribute vec3 position;
+	attribute vec2 source;
+	attribute vec2 target;
+
+	uniform mat4 modelViewMatrix;
+	uniform mat4 projectionMatrix;
+
+	uniform float size;
+	uniform float blend;
+	uniform sampler2D sourceTex;
+	uniform sampler2D targetTex;
+	uniform vec2 dimensions;
+
+	varying vec3 vColor;
+
+	float parabola( float x, float k ) {
+		return pow( 4. * x * ( 1. - x ), k );
+	}
+
+	const float PI = 3.14159265359;
+
+	void main() {
+
+		float pBlend = 0.;
+		float threshold = ( position.y * dimensions.x + position.x ) * .5 / ( dimensions.x * dimensions.y );
+		if( 1.5 * blend > threshold ) {
+			pBlend = 1.5 * blend - threshold;
+		}
+		pBlend = clamp( pBlend, 0., 1. );
+		vec3 origin = vec3(source, 0.);
+		vec3 destination = vec3(target, 0.);
+		vec3 p = mix( origin, destination, pBlend );
+		vec3 d = ( destination - origin );
+		vec3 c = origin + d / 2.;
+		float r = length(d);
+		p.xy = c.xy - .5 * d.xy * cos(pBlend*PI);
+		p.z = .5 * r * sin(pBlend*PI);
+		p.xy -= .5 * dimensions;
+		p *= 1. / dimensions.x;
+		vec2 uvSource = source / dimensions.x;
+		vec2 uvTarget = target / dimensions.x;
+		vColor = mix( texture2D(sourceTex,uvSource).rgb, texture2D(targetTex,uvTarget).rgb, pBlend );
+		float scale = 1.;
+		p.y *= -1.;
+		vec4 mvPosition = modelViewMatrix * vec4( p, 1. );
+		gl_PointSize = size * ( scale / - mvPosition.z );
+		gl_Position = projectionMatrix * mvPosition;
+
+	}
+</script>
+
+<script type="x-shader/x-fragment" id="particle-fs" >
+	precision highp float;
+
+	varying vec3 vColor;
+
+	void main() {
+		gl_FragColor = vec4(vColor, 1.);
+	}
+</script>
+<script>
+var container, renderer, camera, controls, scene;
+var mesh;
+var startTime;
+
+var helper;
+
+var container = document.getElementById('container');
+
+function loadImage(filename, c) {
+
+    var img = new Image();
+    img.addEventListener('load', function(e) {
+        c(this);
+    });
+    img.src = filename;
+
+}
+
+var images = [{
+    file: "uploads/2006/1.jpg"
+}, {
+     file: 'uploads/2006/3.jpg'
+}, {
+     file: 'uploads/2006/4.jpg'
+ },{
+     file: 'uploads/2006/5.jpg'
+ }
+]
+
+function sortPixels(img, callback) {
+
+    var canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    var data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var buffer = data.data;
+
+    var rgb = [];
+    var c = new THREE.Color();
+    for (var j = 0; j < buffer.length; j += 4) {
+        c.setRGB(buffer[j], buffer[j + 1], buffer[j + 2]);
+        rgb.push({
+            c: c.clone(),
+            id: j / 4
+        });
+    }
+
+    rgb.sort(function(a, b) {
+        //return a.c.getHSL().h - b.c.getHSL().h
+        return a.c.getHSL().s - b.c.getHSL().s
+            //return b.c.getHSL().l - a.c.getHSL().l
+    })
+
+    var ptr = 0;
+    var res = new Float32Array(img.width * img.height * 2);
+    rgb.forEach(function(e) {
+        res[ptr] = e.id % img.width;
+        res[ptr + 1] = Math.floor(e.id / img.width);
+        ptr += 2;
+    });
+
+    callback(res);
+
+}
+
+var material;
+var points;
+
+function initScene() {
+
+    images.forEach(function(i, id) {
+
+        loadImage(i.file, function(img) {
+
+            i.image = img;
+            i.texture = new THREE.Texture(img);
+            i.texture.flipY = false;
+            i.texture.needsUpdate = true;
+
+            var copy = new Image();
+            copy.src = i.file;
+            copy.addEventListener('click', function(e) {
+                selectImage(id);
+            })
+            document.getElementById('selector').appendChild(copy)
+
+            sortPixels(img, function(res) {
+                i.buffer = res;
+                i.loaded = true;
+                generateMesh();
+
+            });
+        })
+
+    })
+
+    function generateMesh() {
+
+        if (images.some(function(i) {
+                return i.loaded !== true
+            })) {
+            return
+        }
+
+        var w = images[0].image.width;
+        var h = images[0].image.height;
+        var ptr = 0;
+        var positions = new Float32Array(w * h * 3);
+        for (var y = 0; y < w; y++) {
+            for (var x = 0; x < h; x++) {
+                positions[ptr * 3 + 0] = x;
+                positions[ptr * 3 + 1] = y;
+                positions[ptr * 3 + 2] = 0;
+
+                ptr++;
+            }
+        }
+        var geometry = new THREE.BufferGeometry();
+        geometry.addAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+        geometry.addAttribute('source', new THREE.BufferAttribute(images[0].buffer, 2));
+        geometry.addAttribute('target', new THREE.BufferAttribute(images[1].buffer, 2));
+
+        var loader = new THREE.TextureLoader();
+
+        material = new THREE.RawShaderMaterial({
+            uniforms: {
+                sourceTex: {
+                    type: 't',
+                    value: images[0].texture
+                },
+                targetTex: {
+                    type: 't',
+                    value: images[1].texture
+                },
+                blend: {
+                    type: 'f',
+                    value: 0
+                },
+                size: {
+                    type: 'f',
+                    value: 2.1
+                }, //window.devicePixelRatio },
+                dimensions: {
+                    type: 'v2',
+                    value: new THREE.Vector2(w, h)
+                }
+            },
+            vertexShader: document.getElementById('particle-vs').textContent,
+            fragmentShader: document.getElementById('particle-fs').textContent,
+        });
+
+        points = new THREE.Points(geometry, material);
+        scene.add(points);
+
+        renderer.render(scene, camera);
+        startTime = performance.now();
+        document.getElementById('loading').style.display = 'none';
+    }
+
+}
+
+function init() {
+
+    container = document.getElementById('container');
+	
+
+    scene = new THREE.Scene();
+
+    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, .001, 100);
+    camera.target = new THREE.Vector3(0, 0, 0);
+    camera.position.set(0, 0, 1);
+    camera.lookAt(camera.target);
+    scene.add(camera);
+
+    renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        preserveDrawingBuffer: true
+    });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setClearColor(0x261b1f, 1);
+    container.appendChild(renderer.domElement);
+
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
+
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    initScene();
+    onWindowResized();
+
+    window.addEventListener('resize', onWindowResized);
+
+    animate();
+
+}
+
+function onWindowResized(event) {
+
+    var w = container.clientWidth;
+    var h = container.clientHeight;
+
+    renderer.setSize(w, h);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+
+}
+
+function changeSource(id) {
+    material.uniforms.sourceTex.value = images[id].texture;
+    points.geometry.attributes.source.array = images[id].buffer;
+    points.geometry.attributes.source.needsUpdate = true;
+}
+
+function changeTarget(id) {
+    material.uniforms.targetTex.value = images[id].texture;
+    points.geometry.attributes.target.array = images[id].buffer;
+    points.geometry.attributes.target.needsUpdate = true;
+}
+
+function selectImage(id) {
+    if (currentId === id) return;
+    currentId = id;
+    if (current === 1) changeSource(id);
+    else changeTarget(id);
+    current = 1 - current;
+}
+
+var currentId = 0;
+var current = 0;
+var target = 0;
+var blendValue = 0;
+var step = .05;
+
+// https://gist.github.com/gre/1650294
+//function ease (t) { return t<.5 ? 8*t*t*t*t : 1-8*(--t)*t*t*t };
+//function ease (t) { return t<.5 ? 2*t*t : -1+(4-2*t)*t }
+function ease(t) {
+    return t < .5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1
+}
+
+function animate() {
+
+    requestAnimationFrame(animate);
+
+    controls.update();
+
+    //var t = .001 * ( performance.now() - startTime );
+    //if (material) material.uniforms.blend.value = .5 + .5 * Math.cos(t);
+    if (material) {
+        var dir = current - blendValue;
+        blendValue += dir / 100;
+        material.uniforms.blend.value = ease(blendValue);
+    }
+
+    renderer.render(scene, camera);
+
+}
+
+window.addEventListener('load', init);
+</script>
+
+</body>
+</html>
