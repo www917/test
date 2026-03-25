@@ -1,0 +1,10 @@
+# Minimum versions required for Qwen3.5 (qwen3_5) model support
+#
+# The qwen3_5 model type was added in transformers v5.2.0 (Feb 2026).
+# Using an older version will result in:
+#   KeyError: 'qwen3_5'
+#   ValueError: The checkpoint you are trying to load has model type `qwen3_5`
+#              but Transformers does not recognize this architecture.
+#
+# Install with: pip install -r requirements.txt
+transformers>=5.2.0
