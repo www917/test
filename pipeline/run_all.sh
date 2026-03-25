@@ -2,6 +2,9 @@
 # =============================================================
 # Master script: End-to-end pipeline for Show-o2 evaluation
 #
+# Expected location: Show-o/show-o2/pipeline/
+# Parent directory should be the show-o2 root.
+#
 # GPU allocation:
 #   GPU 0: Qwen3-VL-8B eval server (vLLM)
 #   GPU 1,2,3: Show-o2 1.5B image generation (3 shards)
@@ -11,14 +14,20 @@
 
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-cd "$SCRIPT_DIR"
+PIPELINE_DIR="$(cd "$(dirname "$0")" && pwd)"
+SHOWO2_ROOT="$(dirname "$PIPELINE_DIR")"
+
+cd "$PIPELINE_DIR"
 
 mkdir -p logs outputs/generated outputs/analysis
+
+echo "Pipeline dir:  $PIPELINE_DIR"
+echo "Show-o2 root:  $SHOWO2_ROOT"
 
 # =============================================
 # Step 0: Extract DALLE3 prompts
 # =============================================
+echo ""
 echo "=========================================="
 echo "Step 0: Extracting DALLE3 prompts from BLIP3o-60k"
 echo "=========================================="
@@ -34,39 +43,25 @@ PROMPT_COUNT=$(wc -l < dalle3.txt)
 echo "Total prompts: $PROMPT_COUNT"
 
 # =============================================
-# Step 1: Clone Show-o2 and setup environment
+# Step 1: Check Wan2.1 VAE exists
 # =============================================
 echo ""
 echo "=========================================="
-echo "Step 1: Setting up Show-o2 environment"
+echo "Step 1: Checking prerequisites"
 echo "=========================================="
 
-if [ ! -d "Show-o" ]; then
-    echo "Cloning Show-o repository..."
-    git clone https://github.com/showlab/Show-o.git
-    cd Show-o
-    bash build_env.sh || {
-        echo "build_env.sh failed, installing manually..."
-        pip install torch torchvision torchaudio
-        pip install transformers accelerate omegaconf wandb
-        pip install diffusers einops timm
-    }
-    cd "$SCRIPT_DIR"
-fi
-
-# Download Wan2.1 VAE if not present
-if [ ! -f "Show-o/show-o2/Wan2.1_VAE.pth" ]; then
+if [ ! -f "$SHOWO2_ROOT/Wan2.1_VAE.pth" ]; then
     echo "Downloading Wan2.1 VAE weights..."
-    cd Show-o/show-o2
     python3 -c "
 from huggingface_hub import hf_hub_download
 hf_hub_download(
     repo_id='Wan-AI/Wan2.1-T2V-14B',
     filename='Wan2.1_VAE.pth',
-    local_dir='.',
+    local_dir='$SHOWO2_ROOT',
 )
 "
-    cd "$SCRIPT_DIR"
+else
+    echo "Wan2.1_VAE.pth found at $SHOWO2_ROOT"
 fi
 
 # =============================================
@@ -77,7 +72,6 @@ echo "=========================================="
 echo "Step 2: Starting Qwen3-VL eval server on GPU 0"
 echo "=========================================="
 
-# Check if server is already running
 if curl -s http://localhost:8000/health > /dev/null 2>&1; then
     echo "Eval server already running on port 8000"
 else
@@ -112,14 +106,11 @@ echo "=========================================="
 if [ -f outputs/generated/generation_results.json ]; then
     echo "Generation results already exist, skipping generation"
 else
-    python3 generate_images.py \
-        --mode parallel \
+    python3 generate_images_simple.py \
         --gpu-ids 1 2 3 \
         --prompts dalle3.txt \
         --output-dir outputs/generated \
-        --batch-size 2 \
-        --config Show-o/show-o2/configs/showo2_1.5b_demo_512x512.yaml \
-        --showo-repo Show-o/show-o2 \
+        --config configs/showo2_1.5b_demo_512x512.yaml \
         2>&1 | tee logs/generation.log
 
     echo "Image generation complete!"
@@ -170,11 +161,11 @@ echo "=========================================="
 echo "ALL DONE!"
 echo "=========================================="
 echo ""
-echo "Key output files:"
-echo "  - dalle3.txt                             : Prompts from BLIP3o-60k"
-echo "  - outputs/generated/                      : Generated images"
-echo "  - outputs/generated/generation_results.json: Generation metadata"
-echo "  - outputs/eval_results.json               : Per-image evaluation results"
-echo "  - outputs/analysis/dalle3_failures.txt    : Failed prompts (Show-o2 errors)"
-echo "  - outputs/analysis/failure_analysis.json  : Detailed failure analysis"
+echo "Key output files (all under $PIPELINE_DIR/):"
+echo "  dalle3.txt                              : Prompts from BLIP3o-60k"
+echo "  outputs/generated/                       : Generated images"
+echo "  outputs/generated/generation_results.json : Generation metadata"
+echo "  outputs/eval_results.json                : Per-image evaluation results"
+echo "  outputs/analysis/dalle3_failures.txt     : Failed prompts (Show-o2 errors)"
+echo "  outputs/analysis/failure_analysis.json   : Detailed failure analysis"
 echo ""

@@ -1,8 +1,9 @@
 """
 Step 2 (Simple): Generate images using Show-o2's native inference_t2i.py
 
-This is a simpler wrapper that directly uses Show-o2's built-in inference script
-by creating a temporary prompts file for each shard and calling inference_t2i.py.
+Directly calls Show-o2's built-in inference_t2i.py per shard.
+Expected location: Show-o/show-o2/pipeline/
+inference_t2i.py lives at ../inference_t2i.py (the show-o2 root)
 
 Usage:
     # Launch 3 GPUs in parallel:
@@ -19,6 +20,9 @@ import shutil
 import argparse
 import subprocess
 from pathlib import Path
+
+PIPELINE_DIR = os.path.dirname(os.path.abspath(__file__))
+SHOWO2_ROOT = os.path.dirname(PIPELINE_DIR)  # ../  (show-o2 root)
 
 
 def split_prompts(prompts_file: str, num_shards: int, output_dir: str) -> list[str]:
@@ -39,34 +43,38 @@ def split_prompts(prompts_file: str, num_shards: int, output_dir: str) -> list[s
             for p in shard_prompts:
                 f.write(p + "\n")
 
-        shard_files.append(shard_file)
+        shard_files.append(os.path.abspath(shard_file))
         print(f"Shard {shard_id}: {len(shard_prompts)} prompts ({start}-{end})")
 
     return shard_files
 
 
-def run_showo2_native(gpu_id, shard_id, prompts_file, config, showo_dir, output_dir):
-    """Run Show-o2's native inference_t2i.py on a specific GPU."""
+def run_showo2_native(gpu_id, shard_id, prompts_file, config, output_dir):
+    """Run Show-o2's native inference_t2i.py on a specific GPU.
+    
+    cwd is set to SHOWO2_ROOT so inference_t2i.py can find models/, training/ etc.
+    """
     env = os.environ.copy()
     env["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
     env["WANDB_MODE"] = "disabled"
 
-    shard_output = os.path.join(output_dir, f"shard_{shard_id}")
+    shard_output = os.path.abspath(os.path.join(output_dir, f"shard_{shard_id}"))
     os.makedirs(shard_output, exist_ok=True)
 
     cmd = [
         sys.executable, "inference_t2i.py",
         f"config={config}",
-        f"validation_prompts_file={os.path.abspath(prompts_file)}",
-        f"experiment.output_dir={os.path.abspath(shard_output)}",
+        f"validation_prompts_file={prompts_file}",
+        f"experiment.output_dir={shard_output}",
         "batch_size=2",
         "guidance_scale=7.5",
         "num_inference_steps=50",
         "mode=t2i",
     ]
 
-    print(f"[Shard {shard_id}] GPU {gpu_id}: {' '.join(cmd)}")
-    proc = subprocess.Popen(cmd, cwd=showo_dir, env=env)
+    print(f"[Shard {shard_id}] GPU {gpu_id}: Running in {SHOWO2_ROOT}")
+    print(f"  cmd: {' '.join(cmd)}")
+    proc = subprocess.Popen(cmd, cwd=SHOWO2_ROOT, env=env)
     return proc
 
 
@@ -79,7 +87,6 @@ def collect_results(prompts_file, output_dir, num_shards):
     os.makedirs(final_dir, exist_ok=True)
 
     results = []
-    img_idx = 0
 
     for shard_id in range(num_shards):
         shard_dir = os.path.join(output_dir, f"shard_{shard_id}")
@@ -126,7 +133,7 @@ def collect_results(prompts_file, output_dir, num_shards):
         json.dump(results, f, ensure_ascii=False, indent=2)
 
     success = sum(1 for r in results if r["status"] == "success")
-    print(f"\nCollected {success}/{len(all_prompts)} images → {results_file}")
+    print(f"\nCollected {success}/{len(all_prompts)} images -> {results_file}")
     return results_file
 
 
@@ -136,21 +143,21 @@ def main():
     parser.add_argument("--prompts", type=str, default="dalle3.txt")
     parser.add_argument("--output-dir", type=str, default="outputs/generated")
     parser.add_argument("--config", type=str,
-                        default="configs/showo2_1.5b_demo_512x512.yaml")
-    parser.add_argument("--showo-dir", type=str, default="Show-o/show-o2",
-                        help="Path to show-o2 source directory")
+                        default="configs/showo2_1.5b_demo_512x512.yaml",
+                        help="Config path relative to show-o2 root")
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
 
     num_shards = len(args.gpu_ids)
-    shard_files = split_prompts(args.prompts, num_shards, args.output_dir)
+    prompts_abs = os.path.abspath(args.prompts)
+    shard_files = split_prompts(prompts_abs, num_shards, args.output_dir)
 
     processes = []
     for shard_id, gpu_id in enumerate(args.gpu_ids):
         proc = run_showo2_native(
             gpu_id, shard_id, shard_files[shard_id],
-            args.config, args.showo_dir, args.output_dir,
+            args.config, args.output_dir,
         )
         processes.append(proc)
 
@@ -159,7 +166,7 @@ def main():
         proc.wait()
 
     print("All processes finished. Collecting results...")
-    collect_results(args.prompts, args.output_dir, num_shards)
+    collect_results(prompts_abs, args.output_dir, num_shards)
 
 
 if __name__ == "__main__":

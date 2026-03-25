@@ -4,12 +4,15 @@ Step 2: Generate images using Show-o2 1.5B on GPUs 1,2,3
 Reads dalle3.txt, splits prompts across 3 GPUs, generates images with Show-o2.
 Each GPU runs independently on its assigned shard.
 
+Expected location: Show-o/show-o2/pipeline/
+Parent dir (../) should be the show-o2 root containing models/, training/, transport/ etc.
+
 Usage:
     # Run all 3 GPUs in parallel (recommended):
     python generate_images.py --gpu-ids 1 2 3 --prompts dalle3.txt --output-dir outputs/generated
 
     # Or run a single GPU shard:
-    python generate_images.py --gpu-ids 1 --shard-id 0 --num-shards 3 --prompts dalle3.txt
+    python generate_images.py --mode single --gpu-id 1 --shard-id 0 --num-shards 3 --prompts dalle3.txt
 """
 
 import os
@@ -19,17 +22,22 @@ import subprocess
 import json
 from pathlib import Path
 
+PIPELINE_DIR = os.path.dirname(os.path.abspath(__file__))
+SHOWO2_ROOT = os.path.dirname(PIPELINE_DIR)  # ../  (show-o2 root)
+
 
 def run_single_shard(args):
     """Generate images for a single shard on a single GPU."""
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu_id)
+    os.environ["WANDB_MODE"] = "disabled"
+
+    # Add show-o2 root to path so we can import models, training, transport
+    if SHOWO2_ROOT not in sys.path:
+        sys.path.insert(0, SHOWO2_ROOT)
 
     import torch
     from PIL import Image
     import numpy as np
-
-    sys.path.insert(0, args.showo_repo)
-
     from omegaconf import OmegaConf
     from models import Showo2, Wan21VAE
     from training.prompting_utils import UniversalPrompting
@@ -49,7 +57,8 @@ def run_single_shard(args):
     print(f"[Shard {args.shard_id}] GPU {args.gpu_id}: Processing prompts {start_idx}-{end_idx} "
           f"({len(prompts)} prompts)")
 
-    config = OmegaConf.load(args.config)
+    config_path = os.path.join(SHOWO2_ROOT, args.config)
+    config = OmegaConf.load(config_path)
 
     tokenizer = AutoTokenizer.from_pretrained(
         config.model.showo.llm_model_path, padding_side="left"
@@ -67,7 +76,8 @@ def run_single_shard(args):
     )
 
     print(f"[Shard {args.shard_id}] Loading VAE model...")
-    vae_model = Wan21VAE(config.model.vae_model.pretrained_model_path)
+    vae_path = os.path.join(SHOWO2_ROOT, config.model.vae_model.pretrained_model_path)
+    vae_model = Wan21VAE(vae_path)
     vae_model = vae_model.to(device).eval()
     vae_model.requires_grad_(False)
 
@@ -113,7 +123,6 @@ def run_single_shard(args):
 
                 latent_h = config.model.showo.image_latent_height
                 latent_w = config.model.showo.image_latent_width
-                patch_size = config.model.showo.patch_size
                 latent_dim = config.model.showo.image_latent_dim
 
                 z = torch.randn(
@@ -152,7 +161,7 @@ def run_single_shard(args):
                 results.append({
                     "index": global_idx,
                     "prompt": prompt,
-                    "image_path": filepath,
+                    "image_path": os.path.abspath(filepath),
                     "status": "success",
                 })
 
@@ -188,19 +197,18 @@ def launch_parallel(args):
     processes = []
     for shard_id, gpu_id in enumerate(gpu_ids):
         cmd = [
-            sys.executable, __file__,
+            sys.executable, os.path.abspath(__file__),
             "--mode", "single",
             "--gpu-id", str(gpu_id),
             "--shard-id", str(shard_id),
             "--num-shards", str(num_shards),
-            "--prompts", args.prompts,
-            "--output-dir", args.output_dir,
+            "--prompts", os.path.abspath(args.prompts),
+            "--output-dir", os.path.abspath(args.output_dir),
             "--batch-size", str(args.batch_size),
             "--config", args.config,
-            "--showo-repo", args.showo_repo,
         ]
         print(f"Launching shard {shard_id} on GPU {gpu_id}...")
-        proc = subprocess.Popen(cmd)
+        proc = subprocess.Popen(cmd, cwd=PIPELINE_DIR)
         processes.append(proc)
 
     for proc in processes:
@@ -222,7 +230,7 @@ def launch_parallel(args):
         json.dump(all_results, f, ensure_ascii=False, indent=2)
 
     success = sum(1 for r in all_results if r["status"] == "success")
-    print(f"Merged {len(all_results)} results ({success} successful) → {merged_file}")
+    print(f"Merged {len(all_results)} results ({success} successful) -> {merged_file}")
 
 
 def main():
@@ -241,10 +249,8 @@ def main():
     parser.add_argument("--batch-size", type=int, default=2,
                         help="Batch size per GPU (L20 48G can handle 2-4 at 512x512)")
     parser.add_argument("--config", type=str,
-                        default="Show-o/show-o2/configs/showo2_1.5b_demo_512x512.yaml",
-                        help="Show-o2 config file")
-    parser.add_argument("--showo-repo", type=str, default="Show-o/show-o2",
-                        help="Path to Show-o2 source code")
+                        default="configs/showo2_1.5b_demo_512x512.yaml",
+                        help="Config path relative to show-o2 root")
     args = parser.parse_args()
 
     if args.mode == "parallel":
